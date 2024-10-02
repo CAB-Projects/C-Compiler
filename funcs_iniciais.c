@@ -10,7 +10,6 @@ int main(){
 
     fp = fopen(filename, "r");
     caractere = fgetc(fp); 
-    printf("%c", caractere);
     while ( feof(fp) != 1)
     { 
         AnalisadorLexical(fp,&linha_main,&tk);
