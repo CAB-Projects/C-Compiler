@@ -2,17 +2,19 @@
 
 FILE *fp; 
 char* filename = "new.txt";
+token tk;
+int linha_main = 0;
 
 int main(){
-    token tk;
-    int linha_main = 0;
-    fp = fopen(filename, "r");
-    AnalisadorLexical(fp,&linha_main,&tk);
-    print_token(&tk);
-    // while ( feof(fp) != 1)
-    // { 
-    //     AnalisadorLexical(fp,&linha_main,&tk);
-    //     print_token(&tk);
 
-    // }
+
+    fp = fopen(filename, "r");
+    caractere = fgetc(fp); 
+    printf("%c", caractere);
+    while ( feof(fp) != 1)
+    { 
+        AnalisadorLexical(fp,&linha_main,&tk);
+        print_token(&tk);
+    }
+    print_linhas();
 }

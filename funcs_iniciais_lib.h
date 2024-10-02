@@ -28,11 +28,17 @@ void pega_token(token *tk);
 void AnalisadorLexicalN1();
 void lexical_error(int n, token *tk);
 void AnalisadorLexical(FILE *fp_main, int *linha_main, token *token);
+void print_linhas();
 
 void ler()
 { 
     caractere = fgetc(fp); 
 } 
+
+void print_linhas()
+{
+    printf("linhas: %d", *linha); // fazer uma função para printar as linhas
+}
 /// Cria um token baseado num array de char passado
 void set_token_s(token *tk, char string[])
 { 
@@ -321,14 +327,11 @@ void AnalisadorLexicalN1()
             return;
         }
     }
-
-    printf("linhas: %d", *linha);
 }
 
 void AnalisadorLexical(FILE *fp_main, int *linha_main, token *token){
     linha = linha_main;
     fp = fp_main;
     tk_main = token;
-    AnalisadorLexicalN1();
-    //printf("\n%c\n", caractere);
+    AnalisadorLexicalN1();    
 }
