@@ -1,0 +1,4 @@
+    START
+    ADD 1 2
+    INV 0
+    HLT
