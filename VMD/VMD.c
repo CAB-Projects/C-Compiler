@@ -1,121 +1,3 @@
-/*
-
-LDC k (Carregar constante):
-
-S:=s + 1 ; M [s]: = k
-
-
-LDV n (Carregar valor):
-
-S:=s+1 ; M[s]:=M[n]
-
-
-ADD (Somar):
-
-M[s-1]:=M[s-1]+M[s]; s:=s-1
-
-
-SUB (Subtrair):
-
-M[s-1]:=M[s-1]-M[s]; s:=s-1
-
-
-MULT (Multiplicar):
-
-M[s-1]:=M[s-1]*M[s]; s:=s-1
-
-
-DIVI (Dividir):
-
-M[s-1]:=M[s-1] div M[s]; s:=s-1
-
-
-INV (Inverter sinal):
-
-M[s]:=-M[s]
-
-
-AND (Conjunção):
-
-Se M [s-1]=1 e M[s]=1 então M[s-1]:=1 senão M[s-1]:=0; S:=s-1
-
-
-OR (Disjunção):
-
-Se M[s-1]=1 ou M[s]=1 então M[s-1]:=1 senão M[s-1]:=0; s:=s-1
-
-
-NEG (Negação):
-
-M[s]:=1-M[s]
-
-
-CME (Comparar menor):
-
-Se M[s-1]<M[s] então M[s-1]:=1 senão M[s-1]:=0; s:=s-1
-
-
-CMA (Comparar maior):
-
-Se M[s-1] >M[s] então M[s-1]:=1 senão M[s-1]:=0;s:=s-1
-
-
-CEQ (comparar igual):
-
-Se M[s-1]=M[s] então M[s-1]:=1 senão M[s-1]:=0;s:=s-1
-
-
-CDIF (Comparar desigual):
-
-Se M[s-1]  M[s] então M[s-1]:=1 senão M[s-1]:=0; s:=s-1
-
-
-CMEQ (Comparar menor ou igual)
-
-Se M[s-1]  M[s] então M[s-1]:=1 senão M[s-1]:=0;s:=s-1
-
-
-CMAQ (Comparar maior ou igual):
-
-Se M[s-1]  M[s] então M[s-1]:=1 senão M[s-1]:=0; s:=s-1
-
-JMP p (Desviar sempre):
-i:=p
-
-JMPF p (Desviar se falso):
-Se M[s]=0 então i:=p senão i:=i+1;
-S:=s-1
-
-
-STR n (Armazenar valor):
-M[n]:=M[s]; s:=s-1
-
-RD (Leitura):
-S:=s+1; M[s]:= “próximo valor de entrada”
-
-PRN (Impressão):
-“Imprimir M[s]”; s:=s-1
-
-START (Iniciar programa principal):
-S:=-1
-
-ALLOC m (Alocar memória*):
-S:=s+m
-
-DALLOC m (liberar memória):
-S:=s-m
-
-CALL p (Chamar procedimento ou função):
-S:=s+1;
-M[s]:=i+1;
-i:=p
-
-RETURN (Retornar de procedimento):
-i:=M[s];
-s:=s-1
-
-*/
-
 
 /*  Vai precisar de rótulo, instrução, atributo 1 e atributo 2
 
@@ -131,30 +13,38 @@ s:=s-1
 #include <string.h>
 #include <ctype.h>
 
-#define MAX_PROG_LEN 4
+#define MAX_ROT_LEN 4
 #define MAX_ATR_LEN 4
-#define MAX_ROTULOS 16
-#define MAX_INSTRUCOES 1000
 #define MAX_STR_LEN 8
+#define MAX_NUM_ATR 2
+#define MAX_ROTULOS 16
+#define MAX_INST 100
 
 int i = 0;
 
-struct Programa {
+/*struct Programa {
     char prog[MAX_PROG_LEN];
     int posicao;
-};
+};*/
 
-struct Programa tabelaDePrograma[MAX_ROTULOS];
+/*struct Programa tabelaDePrograma[MAX_ROTULOS];
 int contadorDePrograma = 0;
-
+*/
 struct Pilha {
-    int *M; //Memória da pilha
+    char *M; //Memória da pilha
     int s; //Topo da pilha
     int capacidade;
 };
 
+struct Inst {
+    char rotulo[4];
+    char instrucao[8];
+    char atr1[4];
+    char atr2[4];
+};
+
 void inicializarPilha(struct Pilha *p, int capacidadeInicial) {
-    p->M = (int *)malloc(capacidadeInicial * sizeof(int));
+    p->M = (char *)malloc(capacidadeInicial * sizeof(int));
     if (p->M == NULL) {
         printf("Erro ao alocar memória para a pilha.\n");
         exit(1);
@@ -173,7 +63,7 @@ int pilhaCheia(struct Pilha *p) {
 
 void redimensionarPilha(struct Pilha *p) {
     int novaCapacidade = p->capacidade * 2;
-    p->M = (int *)realloc(p->M, novaCapacidade * sizeof(int));
+    p->M = (char *)realloc(p->M, novaCapacidade * sizeof(int));
     if (p->M == NULL) {
         printf("Erro ao redimensionar a pilha.\n");
         exit(1);
@@ -181,17 +71,16 @@ void redimensionarPilha(struct Pilha *p) {
     p->capacidade = novaCapacidade;
 }
 
-void empilhar(struct Pilha *p, int atributo) {
+void empilhar(struct Pilha *p, char *atr) {
     if (pilhaCheia(p)) {
         printf("Pilha cheia! Redimensionando...\n");
         redimensionarPilha(p);
     }
-    p->M[++(p->s)] = atributo;
-    printf("Elemento %d empilhado.\n", atributo);
-    printf("%d", p->M[0]);
+    p->M[++(p->s)] = *atr;
+    printf("Elemento %d empilhado.\n", atr);
 }
 
-int desempilhar(struct Pilha *p) {
+char desempilhar(struct Pilha *p) {
     if (pilhaVazia(p)) {
         printf("Erro: Pilha vazia!\n");
         return -1;
@@ -273,7 +162,7 @@ int analisaInst(char *inst) {
         return 26;
 }
 
-void programaList(const char *prog, int posicao) {
+/*void programaList(const char *prog, int posicao) {
     if (contadorDePrograma < MAX_ROTULOS) {
         strcpy(tabelaDePrograma[contadorDePrograma].prog, prog);
         tabelaDePrograma[contadorDePrograma].posicao = posicao;
@@ -281,7 +170,7 @@ void programaList(const char *prog, int posicao) {
     } else {
         printf("Erro: número máximo de rótulos atingido.\n");
     }
-}
+}*/
 
 int encontrarPosicaoRotulo(char *list, FILE *file) {
     /*for (int i = 0; i < contadorDePrograma; i++) {
@@ -293,69 +182,117 @@ int encontrarPosicaoRotulo(char *list, FILE *file) {
     return -1;  // Retorna -1 se o rótulo não for encontrado
 */
     char rot[MAX_STR_LEN];
+    int posicao = 0;
     while (fscanf(file, "%s", rot) == 1) {
-        if (strcmp(rot, list) == 0) {
-            return 1;
+        for (int j = 0; j < MAX_STR_LEN; j++){
+            if (strcmp(rot, list) == 1) {
+                return posicao;
+            }
         }
+        posicao++;
     }
-    
-
+    return -1;
 }
 
-void resolveInst(char *inst, struct Pilha *p, FILE *file, int posicao){
-    char atributo[] = "";
-    char list[MAX_ATR_LEN];
-    printf("xd");
-    for(int j = 0; j < MAX_ATR_LEN; j=j){
-        char atributo = fgetc(file);
-        if (atributo == ' '){
-            continue;
-        }
-        list[j] = atributo - '0';
-        j++;
+void lerInstrucoes(FILE *file, struct Inst lista[], int max_inst, int* count) {
+    char ler[50];
+
+    // Loop para ler cada linha do arquivo
+    while (fgets(ler, sizeof(ler), file) && *count < max_inst) {
+        // Inicializa a estrutura com strings vazias
+        strcpy(lista[*count].rotulo, "");
+        strcpy(lista[*count].instrucao, "");
+        strcpy(lista[*count].atr1, "");
+        strcpy(lista[*count].atr2, "");
+
+        // Analisa e preenche os campos da estrutura
+        sscanf(ler, "%3s %7s %3s %3s",
+               lista[*count].rotulo,
+               lista[*count].instrucao,
+               lista[*count].atr1,
+               lista[*count].atr2);
+
+        // Imprime as informações lidas (opcional)
+        printf("%3s %7s %3s %3s\n",
+               lista[*count].rotulo,
+               lista[*count].instrucao,
+               lista[*count].atr1,
+               lista[*count].atr2);
+
+        count++;
     }
-    switch (analisaInst(inst)) {
-        case 0: // RETURN (Retornar de procedimento)
-            i = desempilhar(p);
+}
+
+void resolveInst(struct Pilha *p, FILE *file, int posicao){
+    struct Inst lista[MAX_INST];
+    int count = 0;
+    lerInstrucoes(file, lista, MAX_INST, &count);
+    switch (analisaInst(lista[count].instrucao)) {
+        case 0: // NULL
+            // Nada
             break;
         case 1: // LDC k (Carregar constante)
-            empilhar(p, list[0]);
+            empilhar(p, lista[count].atr1);
             break;
 
-        case 2: // LDV n (Carregar valor)
-            empilhar(p, list[0]);
+        case 2: // LDV n (Carregar variavel)
+            empilhar(p, lista[count].atr1);
             break;
 
         case 3: // ADD (Somar)
-            empilhar(p, list[0] + list[1]);
+            *(int*)lista[count].atr2 = desempilhar(p);
+            *(int*)lista[count].atr1 = desempilhar(p);
+            int resultadoSoma = *(int*)lista[count].atr1 + *(int*)lista[count].atr2;
+            char* resultadoCharSoma = (char*)&resultadoSoma;
+            empilhar(p, resultadoCharSoma);
             break;
 
         case 4: // SUB (Subtrair)
-            empilhar(p, list[0] - list[1]);
+            *(int*)lista[count].atr2 = desempilhar(p);
+            *(int*)lista[count].atr1 = desempilhar(p);
+            int resultadoSub = *(int*)lista[count].atr1 - *(int*)lista[count].atr2;
+            char* resultadoCharSub = (char*)&resultadoSub;
+            empilhar(p, resultadoCharSub);
             break;
 
         case 5: // MULT (Multiplicar)
-            empilhar(p, list[0] * list[1]);
+            *(int*)lista[count].atr2 = desempilhar(p);
+            *(int*)lista[count].atr1 = desempilhar(p);
+            int resultadoMul = *(int*)lista[count].atr1 * *(int*)lista[count].atr2;
+            char* resultadoCharMul = (char*)&resultadoMul;
+            empilhar(p, resultadoCharMul);
             break;
 
         case 6: // DIVI (Dividir)
-            if (list[1] != 0)
-                empilhar(p, list[0] / list[1]);
+            if (*(int*)lista[count].atr2 != 0){
+                *(int*)lista[count].atr2 = desempilhar(p);
+                *(int*)lista[count].atr1 = desempilhar(p);
+                int resultadoDiv = *(int*)lista[count].atr1 / *(int*)lista[count].atr2;
+                char* resultadoCharDiv = (char*)&resultadoDiv;
+                empilhar(p, resultadoCharDiv);
+            }
             else
                 printf("Erro: Divisão por zero!\n");
             break;
 
         case 7: // INV (Inverter sinal)
-            p->M[list[0]] = -p->M[list[0]];
-            printf("%d", p->M[0]);
+            p->M[p->s] = -p->M[p->s];
             break;
 
         case 8: // AND (Conjunção)
-            empilhar(p, (list[0] == 1 && list[1] == 1) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoAND = (*(int*)lista[count].atr1 == 1 && *(int*)lista[count].atr2 == 1) ? 1 : 0;
+            char* ResultadoCharAND = (char*)&ResultadoAND;
+            empilhar(p, ResultadoCharAND);
             break;
 
         case 9: // OR (Disjunção)
-            empilhar(p, (list[0] == 1 || list[1] == 1) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoOR = (*(int*)lista[count].atr1 || *(int*)lista[count].atr2) ? 1 : 0;
+            char* ResultadoCharOR = (char*)&ResultadoOR;
+            empilhar(p, ResultadoCharOR);
             break;
 
         case 10: // NEG (Negação)
@@ -363,141 +300,153 @@ void resolveInst(char *inst, struct Pilha *p, FILE *file, int posicao){
             break;
 
         case 11: // CME (Comparar menor)
-            empilhar(p, (list[0] < list[1]) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoCME = (*(int*)lista[count].atr1 == *(int*)lista[count].atr2) ? 1 : 0;
+            char* ResultadoCharCME = (char*)&ResultadoCME;
+            empilhar(p, ResultadoCharCME);
             break;
 
         case 12: // CMA (Comparar maior)
-            empilhar(p, (list[0] > list[1]) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoCMA = (*(int*)lista[count].atr1 > *(int*)lista[count].atr2) ? 1 : 0;
+            char* ResultadoCharCMA = (char*)&ResultadoCMA;
+            empilhar(p, ResultadoCharCMA);
             break;
 
         case 13: // CEQ (Comparar igual)
-            empilhar(p, (list[0] == list[1]) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoCEQ = (*(int*)lista[count].atr1 == *(int*)lista[count].atr2) ? 1 : 0;
+            char* ResultadoCharCEQ = (char*)&ResultadoCEQ;
+            empilhar(p, ResultadoCharCEQ);
             break;
 
         case 14: // CDIF (Comparar desigual)
-            empilhar(p, (list[0] != list[1]) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoCDIF = (*(int*)lista[count].atr1 != *(int*)lista[count].atr2) ? 1 : 0;
+            char* ResultadoCharCDIF = (char*)&ResultadoCDIF;
+            empilhar(p, ResultadoCharCDIF);
             break;
 
         case 15: // CMEQ (Comparar menor ou igual)
-            empilhar(p, (list[0] <= list[1]) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoCMEQ = (*(int*)lista[count].atr1 <= *(int*)lista[count].atr2) ? 1 : 0;
+            char* ResultadoCharCMEQ = (char*)&ResultadoCMEQ;
+            empilhar(p, ResultadoCharCMEQ);
             break;
 
         case 16: // CMAQ (Comparar maior ou igual)
-            empilhar(p, (list[0] >= list[1]) ? 1 : 0);
+            *lista[count].atr2 = desempilhar(p);
+            *lista[count].atr1 = desempilhar(p);
+            int ResultadoCMAQ = (*(int*)lista[count].atr1 >= *(int*)lista[count].atr2) ? 1 : 0;
+            char* ResultadoCharCMAQ = (char*)&ResultadoCMAQ;
+            empilhar(p, ResultadoCharCMAQ);
             break;
         
         case 17: // JMP p (Desviar sempre)
-            int novaPosicao = encontrarPosicaoRotulo(list, file);  // usa atributo como rótulo
-            if (novaPosicao != -1) {
-                i = novaPosicao;
-                posicao = i;
-            }
+            for (int i = 0; i < MAX_INST; i++) {
+                // Verifique se o rótulo da linha atual é igual a lista[count].atr1
+                if (strcmp(lista[i].rotulo, lista[count].atr1) == 0) {
+                    // Se for igual, você pode executar a ação desejada
+                    count = i;
+                    // Faça o que for necessário quando o rótulo for encontrado
+                }
+            };
             break;
 
         case 18: // JMPF p (Desviar se falso)
-            if (desempilhar(p) == 0) {
-                i = novaPosicao;
-            } else {
-                (i)++;
-            }
+            for (int i = 0; i < MAX_INST; i++) {
+                // Verifique se o rótulo da linha atual é igual a lista[count].atr1
+                if (strcmp(lista[i].rotulo, lista[count].atr1) == 0) {
+                    // Se for igual, você pode executar a ação desejada
+                    count = i;
+                    // Faça o que for necessário quando o rótulo for encontrado
+                }
+            };
             break;
 
         case 19: // STR n (Armazenar valor)
-            p->M[atoi(atributo)] = p->M[p->s]; 
+            p->M[atoi(lista[count].atr1)] = p->M[p->s]; 
             p->s -= 1;
             break;
-
+ 
         case 20: // RD (Leitura)
             printf("Digite o próximo valor de entrada: ");
-            int entrada;
-            scanf("%d", &entrada);
+            char* entrada;
+            scanf("%d", entrada);
             empilhar(p, entrada);
             break;
 
         case 21: // PRN (Impressão)
             printf("%d\n", desempilhar(p));
             break;
-
-        case 22: // START (Iniciar programa principal)
-            p->s = -1;
-            break;
-
-        /*case 23: // ALLOC m (Alocar memória)
-            p->s += operando;
+/*
+        case 23: // ALLOC m (Alocar memória)
+            for (int k = 0; k < (int)lista[count].atr2; k++){
+            p->s = p->s + 1;                // Incrementa o topo da pilha
+            p->M[p->s] = p->M[lista[count].atr1 + k];       // Copia o valor de M[m+k] para o topo da pilha
+            }
             break;
 
         case 24: // DALLOC m (Liberar memória)
-            scanf("%d", &operando); // Lê o valor de m
-            p->s -= operando;
+            for (int k = lista[count].atr2 - 1; k >= 0; k--) {
+                p->M[lista[count].atr1 + k] = p->M[p->s];       // Copia o valor do topo da pilha para M[m+k]
+                p->s = p->s - 1;                // Decrementa o topo da pilha
+            }
+            break;
+*/
+        case 25: // CALL p (Chamar procedimento ou função)
+            for (int i = 0; i < MAX_INST; i++) {
+                // Verifique se o rótulo da linha atual é igual a lista[count].atr1
+                if (strcmp(lista[i].rotulo, lista[count].atr1) == 0) {
+                    // Se for igual, você pode executar a ação desejada
+                    count = i;
+                    // Faça o que for necessário quando o rótulo for encontrado
+                }
             break;
 
-        case 25: // CALL p (Chamar procedimento ou função)
-            scanf("%d", &operando); // Lê o endereço p
-            empilhar(p, *i + 1);
-            *i = operando;
-            break;
-        
+        case 26: // Return
+            i = desempilhar(p);
         case 27: // NULL (Nada)
             // Não faz nada
             break;
-*/
+
+
         default:
-            printf("Instrução inválida: %s\n", inst);
+            printf("Instrução inválida: \n");
             break;
+        }
     }
 }
 
 // Início da MVD
 void MVD(struct Pilha *p, FILE *file) {
-    char prog[MAX_PROG_LEN]; 
-    char lerString[MAX_STR_LEN];
-    char instrucoes[MAX_INSTRUCOES][20];
-    int numInstrucoes = 0;
+    char lerString[50];
+    struct Inst lista[MAX_INST];
     int posicao = 0;
-    if (fscanf(file, "%s", lerString) != 1 || strcmp(lerString, "START") != 0) {
+    int count = 0;
+    lerInstrucoes(file, lista, MAX_INST, &count);
+    char *result = lista[count].instrucao;
+    if (result != "START") {
         printf("Erro: A primeira instrução deve ser 'START'.\n");
         return;
     }
-    programaList(lerString, posicao);
-    // Lê instruções até 'HLT'
-    fscanf(file, "%s", lerString);
-    while (strcmp(lerString, "HLT") != 0) {
-        // Verifica se o lerString é um rótulo
-        if (isdigit(lerString[0])) {
-            strcpy(prog, lerString);
-            programaList(prog, posicao);
-        }
-        else{
-            programaList(prog, posicao);
-            resolveInst(lerString, p, file, posicao);
-        }
-         fscanf(file, "%s", lerString);
+    while ((result = fgets(lerString, sizeof(lerString), file)) != "HLT") {
+            resolveInst(p, file, posicao);
     }
     printf("\nHLT - FIM DO PROGRAMA");
-    /*if (fscanf(file, "%s", lerString) != 1) {
-        printf("Erro ao ler a instrução do arquivo.\n");
-        return;
-    }*/
-            // Feito Ler rótulo
-            // como funciona ler rotulo, entradas possiveis: 
-            // Feito Ler instrução
-
-            // Fazer Ler atributo 1
-            // Fazer Ler atributo 2
 }
 
 int main() {
     struct Pilha p;
     inicializarPilha(&p, 8);
-    FILE *file = fopen("teste.txt", "r");
+    FILE *file = fopen("teste2.txt", "r");
     MVD(&p, file);
     fclose(file);
     liberarPilha(&p);
-    /* Exemplo de uso
-    empilhar(&p, 10);
-    empilhar(&p, 20);
-    desempilhar(&p);
-    liberarPilha(&p);
-*/
     return 0;
 }

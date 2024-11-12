@@ -1,0 +1,11 @@
+    START       
+    LDV     0   
+    LDV     6   
+    LDV     8   
+    LDC     10  
+    CME         
+    LDV     4   
+    LDV     5   
+    LDV     0   
+    LDV     3   
+    HLT      
