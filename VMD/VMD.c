@@ -21,7 +21,7 @@ int i = 0;
 int contadorDePrograma = 0;
 */
 struct Pilha {
-    char *M; //Memória da pilha
+    char M[100]; //Memória da pilha
     int s; //Topo da pilha
 };
 
@@ -350,9 +350,9 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             break;
 
         case 23: // ALLOC m (Alocar memória)
-            for (int k = 0; k < *(int*)lista[*count].atr2; k++){
+            for (int k = 1; k < *(int*)lista[*count].atr2; k++){
                 p->s = p->s + 1;                // Incrementa o topo da pilha
-                int m = (*lista[*count].atr1);
+                int m = atoi(lista[*count].atr1);
                 p->M[p->s] = p->M[m + k];       // Copia o valor de M[m+k] para o topo da pilha
             }
             break;
