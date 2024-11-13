@@ -21,7 +21,7 @@ int i = 0;
 int contadorDePrograma = 0;
 */
 struct Pilha {
-    char M[100]; //Memória da pilha
+    char *M; //Memória da pilha
     int s; //Topo da pilha
 };
 
