@@ -12,18 +12,12 @@
 
 int i = 0;
 
-/*struct Programa {
-    char prog[MAX_PROG_LEN];
-    int posicao;
-};*/
 
-/*struct Programa tabelaDePrograma[MAX_ROTULOS];
-int contadorDePrograma = 0;
-*/
-struct Pilha {
-    char *M; //Memória da pilha
-    int s; //Topo da pilha
-};
+typedef struct node_lista_char node_lista_char;
+typedef struct node_lista_char{
+    char* ch;
+    node_lista_char* anterior;
+}node_lista_char;
 
 struct Inst {
     char rotulo[5];
@@ -32,45 +26,33 @@ struct Inst {
     char atr2[6];
 };
 
-void inicializarPilha(struct Pilha *p, int capacidadeInicial) {
-    p->s = 0;
+void inicializarPilha(struct node_lista_char *p) {
+    p->anterior = 0;
 }
 
-int pilhaVazia(struct Pilha *p) {
-    return p->s == -1;
+void empilhar(node_lista_char** p, char *atr){
+    node_lista_char *temp = (node_lista_char*)malloc(sizeof(node_lista_char));
+    temp->anterior = *p;
+    *p = temp;
+    (*p)->ch = atr;
 }
 
-int pilhaCheia(struct Pilha *p) {
-    return p->s == p->s - 1;
-}
-
-void empilhar(struct Pilha *p, char *atr) {
-    p->M[++(p->s)] = *atr;
-    printf("Elemento %d empilhado.\n", atr);
-}
-
-char desempilhar(struct Pilha *p) {
-    if (pilhaVazia(p)) {
+char* desempilhar(struct node_lista_char **p) {
+    if (*p == NULL) {
         printf("Erro: Pilha vazia!\n");
-        return -1;
+        return NULL;
     } else {
-        return p->M[(p->s)--];
+        char* retorno = (*p)->ch;
+        node_lista_char *temp = (node_lista_char*)malloc(sizeof(node_lista_char));
+        (*p) = (*p)->anterior;
+        free(temp);
+        return retorno;
     }
 }
 
-int topo(struct Pilha *p) {
-    if (pilhaVazia(p)) {
-        printf("Erro: Pilha vazia!\n");
-        return -1;
-    } else {
-        return p->M[p->s];
-    }
-}
-
-void liberarPilha(struct Pilha *p) {
-    free(p->M);
-    p->M = NULL;
-    p->s = 0;
+void liberarPilha(struct node_lista_char *p) {
+    p->ch = NULL;  // PROBLEMA
+    p->anterior = 0;
 }
 
 int analisaInst(struct Inst *lista) {
@@ -187,126 +169,126 @@ void lerInstrucoes(FILE *file, struct Inst lista[MAX_INST]) {
     }
 }
 
-void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_INST]){
+void resolveInst(struct node_lista_char *p, FILE *file, int* count, struct Inst lista[MAX_INST]){
     printf("%8s", lista[*count].instrucao);
     switch (analisaInst(&lista[*count])) {
         case 0: // NULL
             // Nada
             break;
         case 1: // LDC k (Carregar constante)
-            empilhar(p, lista[*count].atr1);
+            empilhar(&p, lista[*count].atr1);
             break;
 
         case 2: // LDV n (Carregar variavel)
-            empilhar(p, lista[*count].atr1);
+            empilhar(&p, lista[*count].atr1);
             break;
 
         case 3: // ADD (Somar)
-            *(int*)lista[*count].atr2 = desempilhar(p);
-            *(int*)lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int resultadoSoma = *(int*)lista[*count].atr1 + *(int*)lista[*count].atr2;
             char* resultadoCharSoma = (char*)&resultadoSoma;
-            empilhar(p, resultadoCharSoma);
+            empilhar(&p, resultadoCharSoma);
             break;
 
         case 4: // SUB (Subtrair)
-            *(int*)lista[*count].atr2 = desempilhar(p);
-            *(int*)lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int resultadoSub = *(int*)lista[*count].atr1 - *(int*)lista[*count].atr2;
             char* resultadoCharSub = (char*)&resultadoSub;
-            empilhar(p, resultadoCharSub);
+            empilhar(&p, resultadoCharSub);
             break;
 
         case 5: // MULT (Multiplicar)
-            *(int*)lista[*count].atr2 = desempilhar(p);
-            *(int*)lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int resultadoMul = *(int*)lista[*count].atr1 * *(int*)lista[*count].atr2;
             char* resultadoCharMul = (char*)&resultadoMul;
-            empilhar(p, resultadoCharMul);
+            empilhar(&p, resultadoCharMul);
             break;
 
         case 6: // DIVI (Dividir)
             if (*(int*)lista[*count].atr2 != 0){
-                *(int*)lista[*count].atr2 = desempilhar(p);
-                *(int*)lista[*count].atr1 = desempilhar(p);
+                *lista[*count].atr2 = *desempilhar(&p);
+                *lista[*count].atr1 = *desempilhar(&p);
                 int resultadoDiv = *(int*)lista[*count].atr1 / *(int*)lista[*count].atr2;
                 char* resultadoCharDiv = (char*)&resultadoDiv;
-                empilhar(p, resultadoCharDiv);
+                empilhar(&p, resultadoCharDiv);
             }
             else
                 printf("Erro: Divisão por zero!\n");
             break;
 
         case 7: // INV (Inverter sinal)
-            p->M[p->s] = -p->M[p->s];
+            p->ch = (char*)(- *(int*)p->ch);
             break;
 
         case 8: // AND (Conjunção)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoAND = (*(int*)lista[*count].atr1 == 1 && *(int*)lista[*count].atr2 == 1) ? 1 : 0;
             char* ResultadoCharAND = (char*)&ResultadoAND;
-            empilhar(p, ResultadoCharAND);
+            empilhar(&p, ResultadoCharAND);
             break;
 
         case 9: // OR (Disjunção)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoOR = (*(int*)lista[*count].atr1 || *(int*)lista[*count].atr2) ? 1 : 0;
             char* ResultadoCharOR = (char*)&ResultadoOR;
-            empilhar(p, ResultadoCharOR);
+            empilhar(&p, ResultadoCharOR);
             break;
 
         case 10: // NEG (Negação)
-            p->M[p->s] = 1 - p->M[p->s];
+            p->ch = (char*)(1 - *(int*)p->ch);
             break;
 
         case 11: // CME (Comparar menor)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoCME = (*(int*)lista[*count].atr1 == *(int*)lista[*count].atr2) ? 1 : 0;
             char* ResultadoCharCME = (char*)&ResultadoCME;
-            empilhar(p, ResultadoCharCME);
+            empilhar(&p, ResultadoCharCME);
             break;
 
         case 12: // CMA (Comparar maior)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoCMA = (*(int*)lista[*count].atr1 > *(int*)lista[*count].atr2) ? 1 : 0;
             char* ResultadoCharCMA = (char*)&ResultadoCMA;
-            empilhar(p, ResultadoCharCMA);
+            empilhar(&p, ResultadoCharCMA);
             break;
 
         case 13: // CEQ (Comparar igual)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoCEQ = (*(int*)lista[*count].atr1 == *(int*)lista[*count].atr2) ? 1 : 0;
             char* ResultadoCharCEQ = (char*)&ResultadoCEQ;
-            empilhar(p, ResultadoCharCEQ);
+            empilhar(&p, ResultadoCharCEQ);
             break;
 
         case 14: // CDIF (Comparar desigual)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoCDIF = (*(int*)lista[*count].atr1 != *(int*)lista[*count].atr2) ? 1 : 0;
             char* ResultadoCharCDIF = (char*)&ResultadoCDIF;
-            empilhar(p, ResultadoCharCDIF);
+            empilhar(&p, ResultadoCharCDIF);
             break;
 
         case 15: // CMEQ (Comparar menor ou igual)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoCMEQ = (*(int*)lista[*count].atr1 <= *(int*)lista[*count].atr2) ? 1 : 0;
             char* ResultadoCharCMEQ = (char*)&ResultadoCMEQ;
-            empilhar(p, ResultadoCharCMEQ);
+            empilhar(&p, ResultadoCharCMEQ);
             break;
 
         case 16: // CMAQ (Comparar maior ou igual)
-            *lista[*count].atr2 = desempilhar(p);
-            *lista[*count].atr1 = desempilhar(p);
+            *lista[*count].atr2 = *desempilhar(&p);
+            *lista[*count].atr1 = *desempilhar(&p);
             int ResultadoCMAQ = (*(int*)lista[*count].atr1 >= *(int*)lista[*count].atr2) ? 1 : 0;
             char* ResultadoCharCMAQ = (char*)&ResultadoCMAQ;
-            empilhar(p, ResultadoCharCMAQ);
+            empilhar(&p, ResultadoCharCMAQ);
             break;
         
         case 17: // JMP p (Desviar sempre)
@@ -321,7 +303,7 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             break;
 
         case 18: // JMPF p (Desviar se falso)
-            if(desempilhar(p) == -1){
+            if(*desempilhar(&p) == -1){
                 for (int i = 0; i < MAX_INST; i++) {
                     // Verifique se o rótulo da linha atual é igual a lista[count].atr1
                     if (strcmp(lista[i].rotulo, lista[*count].atr1) == 0) {
@@ -334,7 +316,8 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             break;
 
         case 19: // STR n (Armazenar valor)
-            p->M[atoi(lista[*count].atr1)] = p->M[p->s]; 
+        // PROBLEMA
+            p->M[atoi(lista[*count].atr1)] = p->ch[p->s]; 
             p->s -= 1;
             break;
  
@@ -342,7 +325,7 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             printf("Digite o próximo valor de entrada: ");
             char* entrada;
             scanf("%d", entrada);
-            empilhar(p, entrada);
+            empilhar(&p, entrada);
             break;
 
         case 21: // PRN (Impressão)
@@ -353,14 +336,14 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             for (int k = 1; k < *(int*)lista[*count].atr2; k++){
                 p->s = p->s + 1;                // Incrementa o topo da pilha
                 int m = atoi(lista[*count].atr1);
-                p->M[p->s] = p->M[m + k];       // Copia o valor de M[m+k] para o topo da pilha
+                p->ch[p->anterior] = p->ch[m + k];       // Copia o valor de M[m+k] para o topo da pilha
             }
             break;
 
         case 24: // DALLOC m (Liberar memória)
             for (int k = *(int*)lista[*count].atr2 - 1; k >= 0; k--) {
-                p->M[*lista[*count].atr1 + k] = p->M[p->s];       // Copia o valor do topo da pilha para M[m+k]
-                p->s = p->s - 1;                // Decrementa o topo da pilha
+                p->ch[*lista[*count].atr1 + k] = p->ch[p->anterior];       // Copia o valor do topo da pilha para M[m+k]
+                p->anterior = p->anterior - 1;                // Decrementa o topo da pilha
             }
             break;
 
@@ -375,7 +358,7 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             break;
 
         case 26: // Return
-            i = desempilhar(p);
+            i = desempilhar(&p);
         case 27: // NULL (Nada)
             // Não faz nada
             break;
@@ -389,7 +372,7 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
 }
 
 // Início da MVD
-void MVD(struct Pilha *p, FILE *file) {
+void MVD(struct node_lista_char *p, FILE *file) {
     char lerString[50];
     struct Inst lista[MAX_INST];
     int countres = 0;
@@ -407,8 +390,8 @@ void MVD(struct Pilha *p, FILE *file) {
 }
 
 int main() {
-    struct Pilha p;
-    inicializarPilha(&p, 8);
+    node_lista_char p;
+    inicializarPilha(&p);
     FILE *file = fopen("teste.txt", "r");
     MVD(&p, file);
     fclose(file);
