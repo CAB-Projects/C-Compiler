@@ -1,1 +1,8 @@
--> precisamos ver como volta (erro tipo 4 por exemplo)
+// MAX_INST e lista de inst
+
+LDV
+testar INV
+testar NEG
+
+rever todos os desempilhar (strcpy)
+

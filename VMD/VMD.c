@@ -12,18 +12,12 @@
 
 int i = 0;
 
-/*struct Programa {
-    char prog[MAX_PROG_LEN];
-    int posicao;
-};*/
-
-/*struct Programa tabelaDePrograma[MAX_ROTULOS];
-int contadorDePrograma = 0;
-*/
-struct Pilha {
-    char *M; //Memória da pilha
+//pilha de dados
+typedef struct {
+    char **M; //Memória da pilha
     int s; //Topo da pilha
-};
+    int capacidade; // capacidade atual da pilha
+} Pilha;
 
 struct Inst {
     char rotulo[5];
@@ -32,33 +26,70 @@ struct Inst {
     char atr2[6];
 };
 
-void inicializarPilha(struct Pilha *p, int capacidadeInicial) {
-    p->s = 0;
+
+Pilha* inicializarPilha(int capacidadeInicial);
+int pilhaVazia(Pilha *p); 
+int pilhaCheia(Pilha *p);
+void empilhar(Pilha *p, char* atributo);
+char* desempilhar(Pilha *p);
+char* topo(Pilha *p);
+void redimensionarPilha(Pilha *p);
+void liberarPilha(Pilha *p);
+int analisaInst(struct Inst *lista);
+
+
+Pilha* inicializarPilha(int capacidadeInicial) {
+    Pilha *p = (Pilha*)malloc(sizeof(Pilha));
+    if (p == NULL) {
+        printf("Erro: Falha na alocação da pilha\n");
+        return NULL;
+    }
+    
+    p->M = (char**)malloc(capacidadeInicial * sizeof(char*));
+    if (p->M == NULL) {
+        free(p);
+        printf("Erro ao alocar memória para a pilha.\n");
+        exit(1);
+    }
+    p->s = -1;
+    p->capacidade = capacidadeInicial;
+    return p;
 }
 
-int pilhaVazia(struct Pilha *p) {
+int pilhaVazia(Pilha *p) {
     return p->s == -1;
 }
 
-int pilhaCheia(struct Pilha *p) {
+int pilhaCheia(Pilha *p) {
     return p->s == p->s - 1;
 }
 
-void empilhar(struct Pilha *p, char *atr) {
-    p->M[++(p->s)] = *atr;
-    printf("Elemento %d empilhado.\n", atr);
+void empilhar(Pilha *p, char* atributo) {
+    if (pilhaCheia(p)) {
+        printf("Pilha cheia! Redimensionando...\n");
+        redimensionarPilha(p);
+    }
+    p->M[++(p->s)] = (char*)malloc((strlen(atributo) + 1) * sizeof(char));
+    if(p->M[p->s] == NULL){
+        p->s--;
+        printf("Erro ao alocar string");
+        exit(1);
+    }
+
+    strcpy(p->M[p->s], atributo);
+    printf("Elemento %d empilhado.\n", atributo);
 }
 
-char desempilhar(struct Pilha *p) {
+char* desempilhar(Pilha *p) {
     if (pilhaVazia(p)) {
         printf("Erro: Pilha vazia!\n");
-        return -1;
+        return NULL;
     } else {
         return p->M[(p->s)--];
     }
 }
 
-int topo(struct Pilha *p) {
+char* topo(Pilha *p) {
     if (pilhaVazia(p)) {
         printf("Erro: Pilha vazia!\n");
         return -1;
@@ -67,10 +98,29 @@ int topo(struct Pilha *p) {
     }
 }
 
-void liberarPilha(struct Pilha *p) {
+void redimensionarPilha(Pilha *p) {
+    int novaCapacidade = (p->capacidade) + 1;
+    char **novo_array = (char**)realloc(p->M, novaCapacidade * sizeof(char*));
+   
+    if (novo_array == NULL) {
+        printf("Erro ao redimensionar a pilha.\n");
+        exit(1);
+    }
+
+    p->M = novo_array;
+    p->capacidade = novaCapacidade;
+}
+
+void liberarPilha(Pilha *p) {
+    if(p == NULL){
+        return;
+    }
+
+    for(int i = 0; i<= p->s; i++){
+        free(p->M[i]);
+    }
     free(p->M);
-    p->M = NULL;
-    p->s = 0;
+    free(p);
 }
 
 int analisaInst(struct Inst *lista) {
@@ -130,47 +180,10 @@ int analisaInst(struct Inst *lista) {
         return 26;
 }
 
-/*void programaList(const char *prog, int posicao) {
-    if (contadorDePrograma < MAX_ROTULOS) {
-        strcpy(tabelaDePrograma[contadorDePrograma].prog, prog);
-        tabelaDePrograma[contadorDePrograma].posicao = posicao;
-        contadorDePrograma++;
-    } else {
-        printf("Erro: número máximo de rótulos atingido.\n");
-    }
-}*/
-
-int encontrarPosicaoRotulo(char *list, FILE *file) {
-    /*for (int i = 0; i < contadorDePrograma; i++) {
-        if (strcmp(tabelaDePrograma[i].prog, prog) == 0) {
-            return tabelaDePrograma[i].posicao;
-        }
-    }
-    printf("Erro: rótulo %s não encontrado.\n", prog);
-    return -1;  // Retorna -1 se o rótulo não for encontrado
-*/
-    char rot[MAX_STR_LEN];
-    int posicao = 0;
-    while (fscanf(file, "%s", rot) == 1) {
-        for (int j = 0; j < MAX_STR_LEN; j++){
-            if (strcmp(rot, list) == 1) {
-                return posicao;
-            }
-        }
-        posicao++;
-    }
-    return -1;
-}
-
 void lerInstrucoes(FILE *file, struct Inst lista[MAX_INST]) {
     int count = -1;
     while (strcmp(lista[count].instrucao, "HLT     ") != 0){
         (count)++;
-            // Inicializa a estrutura com strings vazias
-        /*strcpy(lista[*count].rotulo, "");
-        strcpy(lista[*count].instrucao, "");
-        strcpy(lista[*count].atr1, "");
-        strcpy(lista[*count].atr2, "");*/
 
         // Analisa e preenche os campos da estrutura
         fgets(lista[count].rotulo, sizeof(lista[count].rotulo), file);
@@ -187,7 +200,7 @@ void lerInstrucoes(FILE *file, struct Inst lista[MAX_INST]) {
     }
 }
 
-void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_INST]){
+void resolveInst(Pilha *p, FILE *file, int* count, struct Inst lista[MAX_INST]){
     printf("%8s", lista[*count].instrucao);
     switch (analisaInst(&lista[*count])) {
         case 0: // NULL
@@ -238,7 +251,7 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             break;
 
         case 7: // INV (Inverter sinal)
-            p->M[p->s] = -p->M[p->s];
+            itoa((-atoi(p->M[p->s])), p->M[p->s], 10);
             break;
 
         case 8: // AND (Conjunção)
@@ -256,9 +269,10 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             char* ResultadoCharOR = (char*)&ResultadoOR;
             empilhar(p, ResultadoCharOR);
             break;
-
+            
         case 10: // NEG (Negação)
-            p->M[p->s] = 1 - p->M[p->s];
+            int inv = 1 - atoi(p->M[p->s]);
+            itoa(inv, p->M[p->s], 10);
             break;
 
         case 11: // CME (Comparar menor)
@@ -329,13 +343,13 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
                         *count = i;
                         // Faça o que for necessário quando o rótulo for encontrado
                     }
-            }
-                };
+                }
+            };
             break;
 
         case 19: // STR n (Armazenar valor)
-            p->M[atoi(lista[*count].atr1)] = p->M[p->s]; 
-            p->s -= 1;
+            strcpy(p->M[atoi(lista[*count].atr1)], p->M[p->s]);
+            (p->s)--;
             break;
  
         case 20: // RD (Leitura)
@@ -350,17 +364,18 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
             break;
 
         case 23: // ALLOC m (Alocar memória)
-            for (int k = 1; k < *(int*)lista[*count].atr2; k++){
-                p->s = p->s + 1;                // Incrementa o topo da pilha
+            for (int k = 0; k < (*(int*)lista[*count].atr2) - 1; k++){
+                p->s = (p->s) + 1;                // Incrementa o topo da pilha
                 int m = atoi(lista[*count].atr1);
-                p->M[p->s] = p->M[m + k];       // Copia o valor de M[m+k] para o topo da pilha
+                strcpy(p->M[p->s], p->M[m + k]); // Copia o valor de M[m+k] para o topo da pilha
             }
             break;
 
         case 24: // DALLOC m (Liberar memória)
-            for (int k = *(int*)lista[*count].atr2 - 1; k >= 0; k--) {
-                p->M[*lista[*count].atr1 + k] = p->M[p->s];       // Copia o valor do topo da pilha para M[m+k]
-                p->s = p->s - 1;                // Decrementa o topo da pilha
+            for (int k = (*(int*)lista[*count].atr2) - 1; k >= 0; k--) {
+                int m = atoi(lista[*count].atr1);
+                strcpy(p->M[m + k], p->M[p->s]); // Copia o valor do topo da pilha para M[m+k]
+                p->s = p->s - 1;                 // Decrementa o topo da pilha
             }
             break;
 
@@ -389,8 +404,7 @@ void resolveInst(struct Pilha *p, FILE *file, int* count, struct Inst lista[MAX_
 }
 
 // Início da MVD
-void MVD(struct Pilha *p, FILE *file) {
-    char lerString[50];
+void MVD(Pilha *p, FILE *file) {
     struct Inst lista[MAX_INST];
     int countres = 0;
     lerInstrucoes(file, lista);
@@ -407,11 +421,14 @@ void MVD(struct Pilha *p, FILE *file) {
 }
 
 int main() {
-    struct Pilha p;
-    inicializarPilha(&p, 8);
+    Pilha *p = inicializarPilha(8);
+    if(p == NULL){
+        return 1;
+    }
     FILE *file = fopen("teste.txt", "r");
-    MVD(&p, file);
+    MVD(p, file);
     fclose(file);
-    liberarPilha(&p);
+    liberarPilha(p);
     return 0;
 }
+
